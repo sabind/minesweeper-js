@@ -124,7 +124,7 @@ GridSquare.prototype.leftClick = function() {
 };
     
 GridSquare.prototype.rightClick = function() {
-    if (this.covered
+    if (this.covered)
     {
         if (!this.flagged && this.type === SQUARE_TYPE.BOMB)
         {
