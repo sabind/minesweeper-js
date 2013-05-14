@@ -45,7 +45,7 @@ var BOMB_RATIO = .15;
 
 var GenerateSquare = function(x,y) {
     if (Math.random() > BOMB_RATIO)
-        return new FreeSquare(x, y);
+        return new GridSquare(x, y);
     else
         return new BombSquare(x, y);
 };

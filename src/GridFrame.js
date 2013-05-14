@@ -7,16 +7,16 @@ var GridFrame = function(rows, columns) {
     this.squaresLeft = rows * columns;
     this.badFlags = 0;
 
-    var buildGrid = function(gridRows, gridColumns) {
+    var buildGrid = function(gridRows, gridColumns, gridSquare2DArray, frame) {
 		var temp;
 
 		for (var y = 0; y < gridRows; ++y)
 		{
-			this.gridSquare2DArray.push(new Array());
+			gridSquare2DArray.push(new Array());
 			for (var x = 0; x < gridColumns; ++x)
 			{
 				temp = GenerateSquare(y, x);
-				temp.setParentFrame(this);
+				temp.setParentFrame(frame);
 
                 if (temp.getSquareType() === SQUARE_TYPE.BOMB) {
                     this.numActiveBombs++;
@@ -29,7 +29,7 @@ var GridFrame = function(rows, columns) {
         this.totalBombs = this.numActiveBombs;
 	};
 
-	buildGrid(rows, columns);
+	buildGrid(rows, columns, this.gridSquare2DArray, this);
 };
 
 GridFrame.prototype.decrementFlaggedBombs = function() {
@@ -62,13 +62,13 @@ GridFrame.prototype.isGameWon = function() {
 
 //NEEDS MORE WORK
 GridFrame.prototype.gameOver = function() {
-	for (GridSquare[] rows : gridSquare2DArray)	{
-		for (GridSquare square : rows) {
-			if (square.getSquareType() === SQUARE_TYPE.BOMB && !square.flagged) {	
-				square.color = COLORS.BLOW_UP);
-			}
-		}
-	}
+	this.gridSquare2DArray.forEach(function(row) {
+        row.forEach(function (square) {
+            if (square.getSquareType() === SQUARE_TYPE.BOMB && !square.flagged) {    
+				square.color = COLORS.BLOW_UP;
+			}    
+        });
+	});
 };
 
 //MORE WORK HERE TOO
@@ -88,16 +88,138 @@ GridFrame.prototype.uncover = function(origin) {
             bombsAround = this.countNeighboringBombs(square);
 
             if (bombsAround > 0) {
-                square.color = COLORS.ALERT);
+                square.color = COLORS.ALERT;
                 square.setBombText(bombsAround);
             } else {
-                square.colors = COLORS.CLEARED);
+                square.colors = COLORS.CLEARED;
                 this.addNeighbors(square, toUncover);
             }
 
-            squaresLeft--;
+            this.squaresLeft--;
         }
     }
 };
 
+GridFrame.prototype.countNeighboringBombs = function(square) {
+    var xCoordinate = square.getXCoordinate();
+    var yCoordinate = square.getYCoordinate();
+    
+    var numBombs = 0;
 
+    if (this.coordinatesAreInGrid(yCoordinate, xCoordinate - 1))
+    {
+        if (this.gridSquare2DArray[yCoordinate][xCoordinate - 1].getSquareType() === SQUARE_TYPE.BOMB)
+            numBombs++;
+    }
+    if (this.coordinatesAreInGrid(yCoordinate, xCoordinate + 1))
+    {
+        if (this.gridSquare2DArray[yCoordinate][xCoordinate + 1].getSquareType() === SQUARE_TYPE.BOMB)
+            numBombs++;
+    }
+    if (this.coordinatesAreInGrid(yCoordinate + 1, xCoordinate - 1))
+    {
+        if (this.gridSquare2DArray[yCoordinate + 1][xCoordinate - 1].getSquareType() === SQUARE_TYPE.BOMB)
+            numBombs++;
+    }
+    if (this.coordinatesAreInGrid(yCoordinate + 1, xCoordinate + 1))
+    {
+        if (this.gridSquare2DArray[yCoordinate + 1][xCoordinate + 1].getSquareType() === SQUARE_TYPE.BOMB)
+            numBombs++;
+    }
+    if (this.coordinatesAreInGrid(yCoordinate + 1, xCoordinate))
+    {
+        if (this.gridSquare2DArray[yCoordinate + 1][xCoordinate].getSquareType() === SQUARE_TYPE.BOMB)
+            numBombs++;
+    }
+    if (this.coordinatesAreInGrid(yCoordinate - 1, xCoordinate - 1))
+    {
+        if (this.gridSquare2DArray[yCoordinate - 1][xCoordinate - 1].getSquareType() === SQUARE_TYPE.BOMB)
+            numBombs++;
+    }
+    if (this.coordinatesAreInGrid(yCoordinate - 1, xCoordinate + 1))
+    {
+        if (this.gridSquare2DArray[yCoordinate - 1][xCoordinate + 1].getSquareType() === SQUARE_TYPE.BOMB)
+            numBombs++;
+    }
+    if (this.coordinatesAreInGrid(yCoordinate - 1, xCoordinate))
+    {
+        if (this.gridSquare2DArray[yCoordinate - 1][xCoordinate].getSquareType() === SQUARE_TYPE.BOMB)
+            numBombs++;
+    }
+
+    return numBombs;
+};
+
+GridFrame.prototype.addNeighbors = function(square, toUncover) {
+    var xCoordinate = square.getXCoordinate();
+    var yCoordinate = square.getYCoordinate();
+
+    if (this.coordinatesAreInGrid(yCoordinate, xCoordinate - 1) && this.gridSquare2DArray[yCoordinate][xCoordinate - 1].getSquareType() != SQUARE_TYPE.BOMB)
+    {
+        if (this.gridSquare2DArray[yCoordinate][xCoordinate - 1].isCovered() && !this.gridSquare2DArray[yCoordinate][xCoordinate - 1].isInProcessing())
+        {
+            toUncover.add(this.gridSquare2DArray[yCoordinate][xCoordinate - 1]);
+            this.gridSquare2DArray[yCoordinate][xCoordinate - 1].startProcessing();
+        }
+    }
+    if (this.coordinatesAreInGrid(yCoordinate, xCoordinate + 1) && this.gridSquare2DArray[yCoordinate][xCoordinate + 1].getSquareType() != SQUARE_TYPE.BOMB)
+    {
+        if (this.gridSquare2DArray[yCoordinate][xCoordinate + 1].isCovered() && !this.gridSquare2DArray[yCoordinate][xCoordinate + 1].isInProcessing())
+        {
+            toUncover.add(this.gridSquare2DArray[yCoordinate][xCoordinate + 1]);
+            this.gridSquare2DArray[yCoordinate][xCoordinate + 1].startProcessing();
+        }
+    }
+    if (this.coordinatesAreInGrid(yCoordinate + 1, xCoordinate - 1) && this.gridSquare2DArray[yCoordinate + 1][xCoordinate - 1].getSquareType() != SQUARE_TYPE.BOMB)
+    {
+        if (this.gridSquare2DArray[yCoordinate + 1][xCoordinate - 1].isCovered() && !this.gridSquare2DArray[yCoordinate + 1][xCoordinate - 1].isInProcessing())
+        {
+            toUncover.add(this.gridSquare2DArray[yCoordinate + 1][xCoordinate - 1]);
+            this.gridSquare2DArray[yCoordinate + 1][xCoordinate - 1].startProcessing();
+        }
+    }
+    if (this.coordinatesAreInGrid(yCoordinate + 1, xCoordinate + 1) && this.gridSquare2DArray[yCoordinate + 1][xCoordinate + 1].getSquareType() != SQUARE_TYPE.BOMB)
+    {
+        if (this.gridSquare2DArray[yCoordinate + 1][xCoordinate + 1].isCovered() && !this.gridSquare2DArray[yCoordinate + 1][xCoordinate + 1].isInProcessing())
+        {
+            toUncover.add(this.gridSquare2DArray[yCoordinate + 1][xCoordinate + 1]);
+            this.gridSquare2DArray[yCoordinate + 1][xCoordinate + 1].startProcessing();
+        }
+    }
+    if (this.coordinatesAreInGrid(yCoordinate + 1, xCoordinate) && this.gridSquare2DArray[yCoordinate + 1][xCoordinate].getSquareType() != SQUARE_TYPE.BOMB)
+    {
+        if (this.gridSquare2DArray[yCoordinate + 1][xCoordinate].isCovered() && !this.gridSquare2DArray[yCoordinate + 1][xCoordinate].isInProcessing())
+        {
+            toUncover.add(this.gridSquare2DArray[yCoordinate + 1][xCoordinate]);
+            this.gridSquare2DArray[yCoordinate + 1][xCoordinate].startProcessing();
+        }
+    }
+    if (this.coordinatesAreInGrid(yCoordinate - 1, xCoordinate - 1) && this.gridSquare2DArray[yCoordinate - 1][xCoordinate - 1].getSquareType() != SQUARE_TYPE.BOMB)
+    {
+        if (this.gridSquare2DArray[yCoordinate - 1][xCoordinate - 1].isCovered() && !this.gridSquare2DArray[yCoordinate - 1][xCoordinate - 1].isInProcessing())
+        {
+            toUncover.add(this.gridSquare2DArray[yCoordinate - 1][xCoordinate - 1]);
+            this.gridSquare2DArray[yCoordinate - 1][xCoordinate - 1].startProcessing();
+        }
+    }
+    if (this.coordinatesAreInGrid(yCoordinate - 1, xCoordinate + 1) && this.gridSquare2DArray[yCoordinate - 1][xCoordinate + 1].getSquareType() != SQUARE_TYPE.BOMB)
+    {
+        if (this.gridSquare2DArray[yCoordinate - 1][xCoordinate + 1].isCovered() && !this.gridSquare2DArray[yCoordinate - 1][xCoordinate + 1].isInProcessing())
+        {
+            toUncover.add(this.gridSquare2DArray[yCoordinate - 1][xCoordinate + 1]);
+            this.gridSquare2DArray[yCoordinate - 1][xCoordinate + 1].startProcessing();
+        }
+    }
+    if (this.coordinatesAreInGrid(yCoordinate - 1, xCoordinate) && this.gridSquare2DArray[yCoordinate - 1][xCoordinate].getSquareType() != SQUARE_TYPE.BOMB)
+    {
+        if (this.gridSquare2DArray[yCoordinate - 1][xCoordinate].isCovered() && !this.gridSquare2DArray[yCoordinate - 1][xCoordinate].isInProcessing())
+        {
+            toUncover.add(this.gridSquare2DArray[yCoordinate - 1][xCoordinate]);
+            this.gridSquare2DArray[yCoordinate - 1][xCoordinate].startProcessing();
+        }
+    }
+};
+
+GridFrame.prototype.coordinatesAreInGrid = function(x, y) {
+    return (y >= 0 && y < this.rows && x >= 0 && x < this.columns);
+};

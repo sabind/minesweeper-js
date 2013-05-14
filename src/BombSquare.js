@@ -4,7 +4,7 @@ var BombSquare = function(x, y) {
 	this.type = SQUARE_TYPE.BOMB;
 };
 
-BombSquare.prototype = new GridSquare(x,y);
+BombSquare.prototype = new GridSquare();
 
 BombSquare.prototype.leftClick = function() {
 	if (!this.flagged)
