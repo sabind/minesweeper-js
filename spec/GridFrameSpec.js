@@ -1,32 +1,102 @@
+var CLICKS = {
+    RIGHT: {
+        value: 0,
+        name: "right",
+        code: "r"
+    },
+    LEFT: {
+        value: 1,
+        name: "left",
+        code: "l"
+    }
+};
+Object.freeze(CLICKS);
+
+var Click = function(y, x, type) {
+    this.y = y;
+    this.x = x;
+    this.type = type;
+};
+
 describe("A grid frame should have stuff in it", function() {
-    var frame = new GridFrame(FRAME_HEIGHT, FRAME_WIDTH);
-    var initialNumBombs;
-    var FRAME_WIDTH = 5;
-    var FRAME_HEIGHT = 5;
     
-    var testGrid = {  
-            { "LE", "E", "E", "E", "E" },
-    		{ "E", "E", "E", "E", "E" },
-    		{ "E", "LE", "LB", "E", "E" },
-    		{ "E", "E", "E", "E", "E" },
-    		{ "E", "E", "E", "E", "E" },
-    };
+    var frame, clicks;
+    var testGridStandard = [  
+            [ "LE", "E", "E", "E", "E" ],
+            [ "E", "E", "E", "E", "E" ],
+    		[ "E", "LE", "LB", "E", "E" ],
+    		[ "E", "E", "E", "E", "E" ],
+    		[ "E", "E", "E", "E", "E" ],
+    ];
     
     beforeEach(function () {
-        frame = new GridFrame(FRAME_HEIGHT, FRAME_WIDTH);
-        frame.setGrid(testGrid);
+        frame = {
+            gridSquare2DArray: new Array(),
+            initialBombs: 0,
+            FRAME_WIDTH: 5,
+            FRAME_HEIGHT: 5,
+            clicks: new Array(),
+            numActiveBombs: 0,
+            prototype: new GridFrame(),
+            generateTestFrame: function(grid, frame) {
+                var i = 0;
+                var j;
+                var newGrid = new Array();
+                grid.forEach(function(row) {
+                    j = 0;
+                    newGrid.push(new Array());
+                    row.forEach(function (square) {
+                        if (square.contains("E"))
+                    	{
+                			newGrid[i][j] = new GridSquare(i,j);
+                			newGrid[i][j].setParentFrame(frame);
+                		}
+                		else if (square.contains("B"))
+                		{
+                			frame.numActiveBombs++;
+                			newGrid[i][j] = new BombSquare(i,j);
+                			newGrid[i][j].setParentFrame(frame);
+                		}
+                		if (square.contains("L"))
+                			clicks.push(new Click(i, j, CLICKS.LEFT));
+                		if (square.contains("R"))
+                			clicks.add(new Click(i, j, CLICKS.RIGHT));
+                		j++;    
+                    });
+                	i++;    
+                });
+                frame.setGrid(newGrid);    
+            },
+            clickAll: function()
+            {
+                this.clicks.forEach(function (click) {
+                    if (click.type == CLICKS.LEFT)
+                        this.gridSquare2DArray[click.y][click.x].leftClick();
+                    else if (click.type == CLICKS.RIGHT)
+                        this.gridSquare2DArray[click.y][click.x].rightClick(); 
+                });
+            },
+            click: function(index) {
+                var click = clicks[index];
+                if (click.type == CLICKS.LEFT)
+                    this.gridSquare2DArray[click.y][click.x].leftClick();
+                else if (click.type == CLICKS.RIGHT)
+                    this.gridSquare2DArray[click.y][click.x].rightClick();
+            },
+        };
+        
+        spyOn(frame, 'leftClick');
+        spyOn(frame, 'rightClick');      
     });
     
+    it("decremeneting bombs works", function() {
+        frame.decrementFlaggedBombs();
+        assertEquals(initialNumBombs - 1, frame.numActiveBombs());
+    });
     
 });
 
-@Test
-public void decrementFlaggedBombsTest()
-{
-    frame.decrementFlaggedBombs();
-    assertEquals(initialNumBombs - 1, frame.numActiveBombs());
-}
-
+/*
 @Test
 public void incrementFlaggedBombsTest()
 {
@@ -225,65 +295,4 @@ private class Click extends Point
 		return type;
 	}
 }
-
-private class GridFrameTestDouble extends MinesweeperGridFrame
-{
-	private static final long serialVersionUID = -1539229673077452006L;
-	private GridSquare[][] theGrid;
-	private List<Click> clicks;
-	private int numActiveBombs;
-	
-	public GridFrameTestDouble(String[][] grid, int gridRows, int gridColumns) 
-	{
-		theGrid = new GridSquare[gridRows][gridColumns];
-		clicks = new LinkedList<Click>();
-		numActiveBombs = 0;
-		
-		int i = 0, j;
-		for (String[] rows : grid)
-		{
-			j = 0;
-			for (String square : rows)
-			{
-				if (square.contains("E"))
-				{
-					theGrid[i][j] = new GridSquare(i,j);
-					theGrid[i][j].setParentFrame(this);
-				}
-				else if (square.contains("B"))
-				{
-					numActiveBombs++;
-					theGrid[i][j] = new BombSquare(i,j);
-					theGrid[i][j].setParentFrame(this);
-				}
-				if (square.contains("L"))
-					clicks.add(new Click(j, i, Click.LEFT_CLICK));
-				if (square.contains("R"))
-					clicks.add(new Click(j, i, Click.RIGHT_CLICK));
-				j++;
-			}
-			i++;
-		}
-		this.setGrid(theGrid, numActiveBombs);
-	}
-	
-    public void click(int index)
-    {
-    	Click click = clicks.get(index);
-    	if (click.getType() == Click.LEFT_CLICK)
-    		theGrid[click.y][click.x].leftClick();
-    	else if (click.getType() == Click.RIGHT_CLICK)
-    		theGrid[click.y][click.x].rightClick();
-    }
-
-    public void clickAll()
-    {
-        for (Click click : clicks)
-        {
-            if (click.getType() == Click.LEFT_CLICK)
-                theGrid[click.y][click.x].leftClick();
-            else if (click.getType() == Click.RIGHT_CLICK)
-                theGrid[click.y][click.x].rightClick();
-        }
-    }
-}
+*/
