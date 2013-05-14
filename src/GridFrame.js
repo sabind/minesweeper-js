@@ -80,7 +80,7 @@ GridFrame.prototype.uncover = function(origin) {
     var bombsAround;
     var square;
 
-    while (!toUncover.isEmpty()) {
+    while (!toUncover.length > 0) {
         square = toUncover.pop();
         if (!square.flagged) {
             square.setProcessing(true);

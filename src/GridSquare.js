@@ -66,6 +66,10 @@ GridSquare.prototype.setParentFrame = function(parentFrame) {
     this.parentFrame = parentFrame;
 };
 
+GridSquare.prototype.getColor = function() {
+    return this.color;
+};
+
 GridSquare.prototype.getX = function() {
     return this.x;
 };
@@ -114,13 +118,25 @@ GridSquare.prototype.setNumBombsAround = function(numBombsAround) {
     this.numBombsAround = numBombsAround;
 };
 
-GridSquare.prototype.swapColor = function(color) {
-    this.color = color;
+GridSquare.prototype.swapColor = function() {
+    if (this.covered)
+    {
+        if (this.flagged)
+            this.color = COLORS.FLAGGED_COLOR;
+        else
+            this.color = COLORS.NON_ACTIVE_COLOR;
+    }
 };
 
 GridSquare.prototype.leftClick = function() {
-    if (!this.flagged)
+    if (!this.flagged) {
+        this.covered = false;
+        this.color = COLORS.CLEARED;
         this.uncover();
+    }
+    else {
+        this.rightClick();
+    }
 };
     
 GridSquare.prototype.rightClick = function() {

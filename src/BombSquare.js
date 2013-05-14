@@ -12,5 +12,7 @@ BombSquare.prototype.leftClick = function() {
     	this.setCovered(false);
         this.parentFrame.gameOver();
         this.color = COLORS.BLOW_UP;
+    } else {
+        GridSquare.prototype.leftClick.call(this);
     }
 };
