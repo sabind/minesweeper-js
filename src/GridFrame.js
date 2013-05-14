@@ -32,8 +32,41 @@ var GridFrame = function(rows, columns) {
 	buildGrid(rows, columns, this.gridSquare2DArray, this);
 };
 
-GridFrame.prototype.setGrid = function(grid) {
+var EmptyGridFrame = function(rows, columns) {
+    this.rows = rows;
+	this.columns = columns;
+	this.gridSquare2DArray = new Array();
+    this.numActiveBombs = 0;
+    this.totalBombs = 0;
+    this.squaresLeft = rows * columns;
+    this.badFlags = 0;
+
+    var buildGrid = function(gridRows, gridColumns, gridSquare2DArray, frame) {
+		var temp;
+
+		for (var y = 0; y < gridRows; ++y)
+		{
+			gridSquare2DArray.push(new Array());
+			for (var x = 0; x < gridColumns; ++x)
+			{
+				temp = new GridSquare(y, x);
+				temp.setParentFrame(frame);
+
+				gridSquare2DArray[y].push(temp);
+			}
+		}
+
+        this.totalBombs = this.numActiveBombs;
+	};
+
+	buildGrid(rows, columns, this.gridSquare2DArray, this);
+};
+
+EmptyGridFrame.prototype = new GridFrame();
+
+GridFrame.prototype.setGrid = function(grid, numActiveBombs) {
     this.gridSquare2DArray = grid;
+    this.numActiveBombs = numActiveBombs;
 };
 
 GridFrame.prototype.decrementFlaggedBombs = function() {
@@ -52,11 +85,11 @@ GridFrame.prototype.incrementBadFlags = function() {
     this.badFlags++;
 };
 
-GridFrame.prototype.numActiveBombs = function() {
+GridFrame.prototype.getNumActiveBombs = function() {
     return this.numActiveBombs;
 };
 
-GridFrame.prototype.numBadFlags = function() {
+GridFrame.prototype.getNumBadFlags = function() {
     return this.badFlags;
 };
 
@@ -84,18 +117,18 @@ GridFrame.prototype.uncover = function(origin) {
     var bombsAround;
     var square;
 
-    while (!toUncover.length > 0) {
+    while (toUncover.length > 0) {
         square = toUncover.pop();
-        if (!square.flagged) {
+        if (!square.flagged || square.covered || !square.processing) {
             square.setProcessing(true);
             square.setCovered(false);
             bombsAround = this.countNeighboringBombs(square);
 
             if (bombsAround > 0) {
                 square.color = COLORS.ALERT;
-                square.setBombText(bombsAround);
+                square.setNumBombsAround(bombsAround);
             } else {
-                square.colors = COLORS.CLEARED;
+                square.color = COLORS.CLEARED;
                 this.addNeighbors(square, toUncover);
             }
 
@@ -105,8 +138,8 @@ GridFrame.prototype.uncover = function(origin) {
 };
 
 GridFrame.prototype.countNeighboringBombs = function(square) {
-    var xCoordinate = square.getXCoordinate();
-    var yCoordinate = square.getYCoordinate();
+    var xCoordinate = square.getX();
+    var yCoordinate = square.getY();
     
     var numBombs = 0;
 
@@ -155,71 +188,71 @@ GridFrame.prototype.countNeighboringBombs = function(square) {
 };
 
 GridFrame.prototype.addNeighbors = function(square, toUncover) {
-    var xCoordinate = square.getXCoordinate();
-    var yCoordinate = square.getYCoordinate();
+    var xCoordinate = square.getX();
+    var yCoordinate = square.getY();
 
     if (this.coordinatesAreInGrid(yCoordinate, xCoordinate - 1) && this.gridSquare2DArray[yCoordinate][xCoordinate - 1].getSquareType() != SQUARE_TYPE.BOMB)
     {
-        if (this.gridSquare2DArray[yCoordinate][xCoordinate - 1].isCovered() && !this.gridSquare2DArray[yCoordinate][xCoordinate - 1].isInProcessing())
+        if (this.gridSquare2DArray[yCoordinate][xCoordinate - 1].isCovered() && !this.gridSquare2DArray[yCoordinate][xCoordinate - 1].isProcessing())
         {
-            toUncover.add(this.gridSquare2DArray[yCoordinate][xCoordinate - 1]);
-            this.gridSquare2DArray[yCoordinate][xCoordinate - 1].startProcessing();
+            toUncover.push(this.gridSquare2DArray[yCoordinate][xCoordinate - 1]);
+            this.gridSquare2DArray[yCoordinate][xCoordinate - 1].setProcessing(true);
         }
     }
     if (this.coordinatesAreInGrid(yCoordinate, xCoordinate + 1) && this.gridSquare2DArray[yCoordinate][xCoordinate + 1].getSquareType() != SQUARE_TYPE.BOMB)
     {
-        if (this.gridSquare2DArray[yCoordinate][xCoordinate + 1].isCovered() && !this.gridSquare2DArray[yCoordinate][xCoordinate + 1].isInProcessing())
+        if (this.gridSquare2DArray[yCoordinate][xCoordinate + 1].isCovered() && !this.gridSquare2DArray[yCoordinate][xCoordinate + 1].isProcessing())
         {
-            toUncover.add(this.gridSquare2DArray[yCoordinate][xCoordinate + 1]);
-            this.gridSquare2DArray[yCoordinate][xCoordinate + 1].startProcessing();
+            toUncover.push(this.gridSquare2DArray[yCoordinate][xCoordinate + 1]);
+            this.gridSquare2DArray[yCoordinate][xCoordinate + 1].setProcessing(true);
         }
     }
     if (this.coordinatesAreInGrid(yCoordinate + 1, xCoordinate - 1) && this.gridSquare2DArray[yCoordinate + 1][xCoordinate - 1].getSquareType() != SQUARE_TYPE.BOMB)
     {
-        if (this.gridSquare2DArray[yCoordinate + 1][xCoordinate - 1].isCovered() && !this.gridSquare2DArray[yCoordinate + 1][xCoordinate - 1].isInProcessing())
+        if (this.gridSquare2DArray[yCoordinate + 1][xCoordinate - 1].isCovered() && !this.gridSquare2DArray[yCoordinate + 1][xCoordinate - 1].isProcessing())
         {
-            toUncover.add(this.gridSquare2DArray[yCoordinate + 1][xCoordinate - 1]);
-            this.gridSquare2DArray[yCoordinate + 1][xCoordinate - 1].startProcessing();
+            toUncover.push(this.gridSquare2DArray[yCoordinate + 1][xCoordinate - 1]);
+            this.gridSquare2DArray[yCoordinate + 1][xCoordinate - 1].setProcessing(true);
         }
     }
     if (this.coordinatesAreInGrid(yCoordinate + 1, xCoordinate + 1) && this.gridSquare2DArray[yCoordinate + 1][xCoordinate + 1].getSquareType() != SQUARE_TYPE.BOMB)
     {
-        if (this.gridSquare2DArray[yCoordinate + 1][xCoordinate + 1].isCovered() && !this.gridSquare2DArray[yCoordinate + 1][xCoordinate + 1].isInProcessing())
+        if (this.gridSquare2DArray[yCoordinate + 1][xCoordinate + 1].isCovered() && !this.gridSquare2DArray[yCoordinate + 1][xCoordinate + 1].isProcessing())
         {
-            toUncover.add(this.gridSquare2DArray[yCoordinate + 1][xCoordinate + 1]);
-            this.gridSquare2DArray[yCoordinate + 1][xCoordinate + 1].startProcessing();
+            toUncover.push(this.gridSquare2DArray[yCoordinate + 1][xCoordinate + 1]);
+            this.gridSquare2DArray[yCoordinate + 1][xCoordinate + 1].setProcessing(true);
         }
     }
     if (this.coordinatesAreInGrid(yCoordinate + 1, xCoordinate) && this.gridSquare2DArray[yCoordinate + 1][xCoordinate].getSquareType() != SQUARE_TYPE.BOMB)
     {
-        if (this.gridSquare2DArray[yCoordinate + 1][xCoordinate].isCovered() && !this.gridSquare2DArray[yCoordinate + 1][xCoordinate].isInProcessing())
+        if (this.gridSquare2DArray[yCoordinate + 1][xCoordinate].isCovered() && !this.gridSquare2DArray[yCoordinate + 1][xCoordinate].isProcessing())
         {
-            toUncover.add(this.gridSquare2DArray[yCoordinate + 1][xCoordinate]);
-            this.gridSquare2DArray[yCoordinate + 1][xCoordinate].startProcessing();
+            toUncover.push(this.gridSquare2DArray[yCoordinate + 1][xCoordinate]);
+            this.gridSquare2DArray[yCoordinate + 1][xCoordinate].setProcessing(true);
         }
     }
     if (this.coordinatesAreInGrid(yCoordinate - 1, xCoordinate - 1) && this.gridSquare2DArray[yCoordinate - 1][xCoordinate - 1].getSquareType() != SQUARE_TYPE.BOMB)
     {
-        if (this.gridSquare2DArray[yCoordinate - 1][xCoordinate - 1].isCovered() && !this.gridSquare2DArray[yCoordinate - 1][xCoordinate - 1].isInProcessing())
+        if (this.gridSquare2DArray[yCoordinate - 1][xCoordinate - 1].isCovered() && !this.gridSquare2DArray[yCoordinate - 1][xCoordinate - 1].isProcessing())
         {
-            toUncover.add(this.gridSquare2DArray[yCoordinate - 1][xCoordinate - 1]);
-            this.gridSquare2DArray[yCoordinate - 1][xCoordinate - 1].startProcessing();
+            toUncover.push(this.gridSquare2DArray[yCoordinate - 1][xCoordinate - 1]);
+            this.gridSquare2DArray[yCoordinate - 1][xCoordinate - 1].setProcessing(true);
         }
     }
     if (this.coordinatesAreInGrid(yCoordinate - 1, xCoordinate + 1) && this.gridSquare2DArray[yCoordinate - 1][xCoordinate + 1].getSquareType() != SQUARE_TYPE.BOMB)
     {
-        if (this.gridSquare2DArray[yCoordinate - 1][xCoordinate + 1].isCovered() && !this.gridSquare2DArray[yCoordinate - 1][xCoordinate + 1].isInProcessing())
+        if (this.gridSquare2DArray[yCoordinate - 1][xCoordinate + 1].isCovered() && !this.gridSquare2DArray[yCoordinate - 1][xCoordinate + 1].isProcessing())
         {
-            toUncover.add(this.gridSquare2DArray[yCoordinate - 1][xCoordinate + 1]);
-            this.gridSquare2DArray[yCoordinate - 1][xCoordinate + 1].startProcessing();
+            toUncover.push(this.gridSquare2DArray[yCoordinate - 1][xCoordinate + 1]);
+            this.gridSquare2DArray[yCoordinate - 1][xCoordinate + 1].setProcessing(true);
         }
     }
     if (this.coordinatesAreInGrid(yCoordinate - 1, xCoordinate) && this.gridSquare2DArray[yCoordinate - 1][xCoordinate].getSquareType() != SQUARE_TYPE.BOMB)
     {
-        if (this.gridSquare2DArray[yCoordinate - 1][xCoordinate].isCovered() && !this.gridSquare2DArray[yCoordinate - 1][xCoordinate].isInProcessing())
+        if (this.gridSquare2DArray[yCoordinate - 1][xCoordinate].isCovered() && !this.gridSquare2DArray[yCoordinate - 1][xCoordinate].isProcessing())
         {
-            toUncover.add(this.gridSquare2DArray[yCoordinate - 1][xCoordinate]);
-            this.gridSquare2DArray[yCoordinate - 1][xCoordinate].startProcessing();
+            toUncover.push(this.gridSquare2DArray[yCoordinate - 1][xCoordinate]);
+            this.gridSquare2DArray[yCoordinate - 1][xCoordinate].setProcessing(true)
         }
     }
 };
