@@ -32,6 +32,10 @@ var GridFrame = function(rows, columns) {
 	buildGrid(rows, columns, this.gridSquare2DArray, this);
 };
 
+GridFrame.prototype.setGrid = function(grid, rows, cols) {
+    this.gridSquare2DArray = grid;
+};
+
 GridFrame.prototype.decrementFlaggedBombs = function() {
     this.numActiveBombs--;
 };
